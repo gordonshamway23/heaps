@@ -1152,7 +1152,7 @@ class BaseLibrary {
 				var data = haxe.io.Bytes.alloc(fr.stride * fr.count);
 				var p = fr.offset;
 				inline function addFloat(v) {
-					data.setFloat(p++,v);
+					data.setFloat(p,v); p += 4;
 				}
 				for( i in 0...frames.length ) {
 					var f = frames[i];

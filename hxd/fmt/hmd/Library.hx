@@ -408,45 +408,14 @@ class Library {
 				var frameCount = a.frames;
 				if( o.flags.has(SinglePosition) )
 					frameCount = 1;
-				var fl = new haxe.ds.Vector<h3d.anim.LinearAnimation.LinearFrame>(frameCount);
-				var size = ((pos ? 3 : 0) + (rot ? 3 : 0) + (scale?3:0)) * 4 * frameCount;
+				var fl = new h3d.anim.LinearAnimation.LinearFrames();
+				fl.count = frameCount;
+				fl.offset = 0;
+				fl.stride = ((pos ? 3 : 0) + (rot ? 3 : 0) + (scale?3:0)) * 4;
+				var size = fl.stride * fl.count;
 				var data = haxe.io.Bytes.alloc(size);
 				entry.read(data, 0, size);
-				var p = 0;
-				for( i in 0...frameCount ) {
-					var f = new h3d.anim.LinearAnimation.LinearFrame();
-					if( pos ) {
-						f.tx = data.getFloat(p); p += 4;
-						f.ty = data.getFloat(p); p += 4;
-						f.tz = data.getFloat(p); p += 4;
-					} else {
-						f.tx = 0;
-						f.ty = 0;
-						f.tz = 0;
-					}
-					if( rot ) {
-						f.qx = data.getFloat(p); p += 4;
-						f.qy = data.getFloat(p); p += 4;
-						f.qz = data.getFloat(p); p += 4;
-						var qw = 1 - (f.qx * f.qx + f.qy * f.qy + f.qz * f.qz);
-						f.qw = qw < 0 ? -Math.sqrt( -qw) : Math.sqrt(qw);
-					} else {
-						f.qx = 0;
-						f.qy = 0;
-						f.qz = 0;
-						f.qw = 1;
-					}
-					if( scale ) {
-						f.sx = data.getFloat(p); p += 4;
-						f.sy = data.getFloat(p); p += 4;
-						f.sz = data.getFloat(p); p += 4;
-					} else {
-						f.sx = 1;
-						f.sy = 1;
-						f.sz = 1;
-					}
-					fl[i] = f;
-				}
+				fl.data = data;
 				l.addCurve(o.name, fl, rot, scale);
 			}
 			if( o.flags.has(HasUV) ) {

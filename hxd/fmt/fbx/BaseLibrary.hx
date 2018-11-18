@@ -1139,8 +1139,42 @@ class BaseLibrary {
 					fov[f] = c.fov.v[fovp - 1];
 				}
 			}
-			if( frames != null )
-				anim.addCurve(c.object, frames, c.r != null || def.rotate != null || def.preRot != null, c.s != null || def.scale != null);
+			if( frames != null ) {
+				var hasRot = c.r != null || def.rotate != null || def.preRot != null;
+				var hasScale = c.s != null || def.scale != null;
+				var fr = new h3d.anim.LinearAnimation.LinearFrames();
+				fr.count = frames.length;
+				fr.offset = 0;
+				fr.stride = 3;
+				if( hasRot ) fr.stride += 3;
+				if( hasScale ) fr.stride += 3;
+				fr.stride *= 4;
+				var data = haxe.io.Bytes.alloc(fr.stride * fr.count);
+				var p = fr.offset;
+				inline function addFloat(v) {
+					data.setFloat(p++,v);
+				}
+				for( i in 0...frames.length ) {
+					var f = frames[i];
+					addFloat(f.tx);
+					addFloat(f.ty);
+					addFloat(f.tz);
+					if( hasRot ) {
+						var ql = Math.sqrt(f.qx * f.qx + f.qy * f.qy + f.qz * f.qz + f.qw * f.qw);
+						if( f.qw < 0 ) ql = -ql;
+						addFloat(round(f.qx / ql));
+						addFloat(round(f.qy / ql));
+						addFloat(round(f.qz / ql));
+					}
+					if( hasScale ) {
+						addFloat(f.sx);
+						addFloat(f.sy);
+						addFloat(f.sz);
+					}
+				}
+				fr.data = data;
+				anim.addCurve(c.object, fr, hasRot, hasScale);
+			}
 			if( alpha != null )
 				anim.addAlphaCurve(c.object, alpha);
 			if( uvs != null )

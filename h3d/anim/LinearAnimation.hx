@@ -1,6 +1,15 @@
 package h3d.anim;
 import h3d.anim.Animation;
 
+class LinearFrames {
+	public var count : Int;
+	public var data : haxe.io.Bytes;
+	public var offset : Int;
+	public var stride : Int;
+	public function new() {
+	}
+}
+
 class LinearFrame {
 	public var tx : Float;
 	public var ty : Float;
@@ -26,7 +35,7 @@ class LinearFrame {
 class LinearObject extends AnimatedObject {
 	public var hasRotation : Bool;
 	public var hasScale : Bool;
-	public var frames : haxe.ds.Vector<LinearFrame>;
+	public var frames : LinearFrames;
 	public var alphas : haxe.ds.Vector<Float>;
 	public var uvs : haxe.ds.Vector<Float>;
 	public var propName:  String;
@@ -50,6 +59,8 @@ class LinearAnimation extends Animation {
 
 	@:s public var resPath : String;
 	var syncFrame : Float;
+	var tmpFrame1 = new LinearFrame();
+	var tmpFrame2 = new LinearFrame();
 
 	public function new(name,frame,sampling) {
 		super(name,frame,sampling);
@@ -128,7 +139,7 @@ class LinearAnimation extends Animation {
 	}
 
 	function sortByFrameCountDesc( o1 : LinearObject, o2 : LinearObject ) {
-		return (o2.frames == null ? 10 : o2.frames.length) - (o1.frames == null ? 10 : o1.frames.length);
+		return (o2.frames == null ? 10 : o2.frames.count) - (o1.frames == null ? 10 : o1.frames.count);
 	}
 
 	inline function uvLerp( v1 : Float, v2 : Float, k : Float ) {
@@ -139,6 +150,34 @@ class LinearAnimation extends Animation {
 		else if( v1 > v2 + 0.5 )
 			v1 -= 1;
 		return v1 * (1 - k) + v2 * k;
+	}
+
+	function decodeFrame( o : LinearObject, f : LinearFrame, index : Int ) {
+		var fr = o.frames;
+		var p = fr.offset + fr.stride * index;
+		var data = fr.data;
+		inline function getFloat() { var v = data.getFloat(p); p += 4; return v; };
+		f.tx = getFloat();
+		f.ty = getFloat();
+		f.tz = getFloat();
+		if( o.hasRotation ) {
+			f.qx = getFloat();
+			f.qy = getFloat();
+			f.qz = getFloat();
+			var qw = 1 - (f.qx * f.qx + f.qy * f.qy + f.qz * f.qz);
+			f.qw = qw < 0 ? -Math.sqrt(-qw) : Math.sqrt(qw);
+		} else {
+			f.qx = f.qy = f.qz = 0;
+			f.qw = 1;
+		}
+		if( o.hasScale ) {
+			f.sx = getFloat();
+			f.sy = getFloat();
+			f.sz = getFloat();
+		} else {
+			f.sx = f.sy = f.sz = 1;
+		}
+		return f;
 	}
 
 	@:access(h3d.scene.Skin)
@@ -182,13 +221,14 @@ class LinearAnimation extends Animation {
 			var frame1 = frame1, frame2 = frame2;
 
 			// if we have a single frame
-			if( o.frames.length == 1 ) {
+			if( o.frames.count == 1 ) {
 				if( isSync )
 					break;
 				frame1 = frame2 = 0;
 			}
 
-			var f1 = o.frames[frame1], f2 = o.frames[frame2];
+			var f1 = decodeFrame(o, tmpFrame1, frame1);
+			var f2 = frame1 == frame2 ? f1 : decodeFrame(o, tmpFrame2, frame2);
 
 			var m = o.matrix;
 

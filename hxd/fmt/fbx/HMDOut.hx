@@ -734,27 +734,9 @@ class HMDOut extends BaseLibrary {
 					o.flags.set(HasRotation);
 				if( obj.hasScale )
 					o.flags.set(HasScale);
-				if( obj.frames.length == 1 )
+				if( obj.frames.count == 1 )
 					o.flags.set(SinglePosition);
-				for( f in obj.frames ) {
-					if( o.flags.has(HasPosition) ) {
-						writeFloat(f.tx);
-						writeFloat(f.ty);
-						writeFloat(f.tz);
-					}
-					if( o.flags.has(HasRotation) ) {
-						var ql = Math.sqrt(f.qx * f.qx + f.qy * f.qy + f.qz * f.qz + f.qw * f.qw);
-						if( f.qw < 0 ) ql = -ql;
-						writeFloat(round(f.qx / ql));
-						writeFloat(round(f.qy / ql));
-						writeFloat(round(f.qz / ql));
-					}
-					if( o.flags.has(HasScale) ) {
-						writeFloat(f.sx);
-						writeFloat(f.sy);
-						writeFloat(f.sz);
-					}
-				}
+				dataOut.write(obj.frames.data);
 			}
 			if( obj.uvs != null ) {
 				o.flags.set(HasUV);

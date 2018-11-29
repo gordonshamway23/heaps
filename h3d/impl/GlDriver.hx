@@ -186,7 +186,7 @@ class GlDriver extends Driver {
 	var firstShader = true;
 	var rightHanded = false;
 	var hasMultiIndirect = false;
-	
+
 	var drawMode : Int;
 
 	public function new(antiAlias=0) {
@@ -210,7 +210,7 @@ class GlDriver extends Driver {
 		programs = new Map();
 		defStencil = new Stencil();
 
-		#if hl
+		#if hlsdl
 		hasMultiIndirect = gl.getConfigParameter(0) > 0;
 		#end
 
@@ -616,7 +616,7 @@ class GlDriver extends Driver {
 		// Not entirely accurate wireframe, but the best possible on WebGL.
 		drawMode = wireframe ? GL.LINE_STRIP : GL.TRIANGLES;
 		#end
-		
+
 		if( diff & Pass.culling_mask != 0 ) {
 			var cull = Pass.getCulling(bits);
 			if( cull == 0 )
@@ -1355,8 +1355,9 @@ class GlDriver extends Driver {
 			gl.disable(GL.SCISSOR_TEST);
 		else {
 			gl.enable(GL.SCISSOR_TEST);
-			var th = curTarget == null ? bufferHeight : curTarget.height;
-			gl.scissor(x, th - (y + height), width, height);
+			if( curTarget == null )
+				y = bufferHeight - (y + height);
+			gl.scissor(x, y, width, height);
 		}
 	}
 
@@ -1552,7 +1553,7 @@ class GlDriver extends Driver {
 			false;
 		}
 	}
-	
+
 	// Draws video element directly onto Texture. Used for video rendering.
 	private function uploadTextureVideoElement( t : h3d.mat.Texture, v : js.html.VideoElement, mipLevel : Int, side : Int ) {
 		var cubic = t.flags.has(Cube);
@@ -1568,7 +1569,7 @@ class GlDriver extends Driver {
 		}
 		restoreBind();
 	}
-	
+
 	#end
 
 	override function captureRenderBuffer( pixels : hxd.Pixels ) {

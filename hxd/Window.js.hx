@@ -28,6 +28,7 @@ class Window {
 	var focused : Bool;
 
 	var keyDownCharCode : Int = -1;
+	var keyDownKeyCode : Int = -1;
 	var keyDownRepeatTimer : haxe.Timer = null;
 	
 	/**
@@ -293,9 +294,10 @@ class Window {
 		}
 
 		//workaround for keypress no longer working
-		if(e.key.length==1 && e.key.charCodeAt(0)==keyDownCharCode)
+		if(e.key.length==1 && e.keyCode==keyDownKeyCode)
 		{
 			keyDownCharCode=-1;
+			keyDownKeyCode=-1;
 			if(keyDownRepeatTimer!=null)
 			{
 				keyDownRepeatTimer.stop();
@@ -317,6 +319,7 @@ class Window {
 		if(e.key.length==1)
 		{
 			keyDownCharCode=e.key.charCodeAt(0);
+			keyDownKeyCode=e.keyCode;
 			if(keyDownRepeatTimer!=null) keyDownRepeatTimer.stop();
 			keyDownRepeatTimer=new haxe.Timer(500);//default delay, in sdl
 			keyDownRepeatTimer.run=repeatDownKey;
